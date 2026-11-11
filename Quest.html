@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quest</title>
+<meta name="description" content="Scan. Receive a quest. Film it.">
+<meta name="theme-color" content="#1F3CFF">
+<link rel="icon"
+  href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="design.css">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <span class="mono" id="quest-index">01 / 03</span>
+    <span class="chip mono" id="quest-type">SOLO</span>
+  </header>
+
+  <main>
+    <div class="quest-box">
+      <p id="quest-scramble" aria-live="polite"></p>
+    </div>
+  </main>
+
+  <section class="rules">
+    <p class="details" id="quest-details"></p>
+    <p class="staff-note mono" id="staff-note" hidden>გააფრთხილე სტაფი გადაღების შესახებ.</p>
+    <ol class="steps mono" id="steps">
+      <li><b>01</b> გადაიღე. არა ნაკლებ <span id="film-seconds">30</span> წამი.</li>
+      <li><b>02</b> ჩაგვიგდე.</li>
+      <li><b>03</b> მოგვნიშნე <span id="handle-tag"></span>.</li>
+    </ol>
+  </section>
+
+  <footer>
+    <button id="reroll-btn" type="button">Reroll (1 left)</button>
+    <p class="credit mono" id="credit-line"></p>
+  </footer>
+</div>
+
+<noscript>Enable JavaScript to receive your quest.</noscript>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- CONFIG ----
+  var CONFIG = {
+    handle: "@Educity",
+    credit: "შექმნილია ედუსითის მოსწავლის მიერ, უცნობის, ვისაც სურს ნახოს, როგორ აკეთებ რაღაც სისულელეს.",
+    maxRerolls: 1,
+    maxFilmSeconds: 30
+  };
+
+  // ---- CHALLENGES (replace this array with your real list) ----
+  var CHALLENGES = [
+    { type: "staff", title: "შემდეგ ლექციაზე, კესო მასწავლებელს შოკოლადი მიეცი.", details: "" },
+    { type: "staff", title: "მონახე გიო, და გამოესაუბრე, უბრალოდ ყველაფერზე პასუხად 'დიახ მისტერ გიო' უნდა გასცე.", details: "" },
+    { type: "solo", title: "გააზიარე რა ისწავლე დღევანდელ ლექციაზე.", details: "" },
+    { type: "solo", title: "გააკეთე 10 აზიდვა/ბუქნი.", details: "" },
+    { type: "staff", title: "შემდეგ ლექციაზე, ლევან მასწავლებელს რამე ციტრუსი მოუტანე", details: ""},
+    { type: "solo", title: "მოსწავლეს სახელად ოთიკო ჭუმბაშვილს, მჟავე კიტრი მიეცი.", details: ""},
+    { type: "solo", title: "მოსწავლეს სახელად თეკლა გიორგაძე, და საერთო ენა მონახე მასთან.", details: ""},
+    { type: "solo", title: "ედუსითიში მყოფი ყველა მცენარე მონახე.", details: ""},
+  ];
+
+  var THEMES = [
+    { bg:"#1F3CFF", fg:"#FFD21F", btnBg:"#FFD21F", btnFg:"#0A0F2E" },
+    { bg:"#FFD21F", fg:"#0A0F2E", btnBg:"#1F3CFF", btnFg:"#FFD21F" },
+    { bg:"#0A0F2E", fg:"#FFD21F", btnBg:"#1F3CFF", btnFg:"#FFD21F" }
+  ];
+
+  var GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!?#*";
+  var els = {
+    root: document.documentElement,
+    idx: document.getElementById("quest-index"),
+    type: document.getElementById("quest-type"),
+    scramble: document.getElementById("quest-scramble"),
+    details: document.getElementById("quest-details"),
+    staffNote: document.getElementById("staff-note"),
+    filmSeconds: document.getElementById("film-seconds"),
+    handleTag: document.getElementById("handle-tag"),
+    rerollBtn: document.getElementById("reroll-btn"),
+    credit: document.getElementById("credit-line")
+  };
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function store(){
+    try {
+      var raw = sessionStorage.getItem("quest-state");
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function saveStore(state){
+    try { sessionStorage.setItem("quest-state", JSON.stringify(state)); } catch(e){}
+  }
+
+  function applyTheme(theme){
+    var r = els.root.style;
+    r.setProperty("--bg", theme.bg);
+    r.setProperty("--fg", theme.fg);
+    r.setProperty("--btn-bg", theme.btnBg);
+    r.setProperty("--btn-fg", theme.btnFg);
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", theme.bg);
+  }
+
+  function scrambleInto(el, finalText, done){
+    if (reduced) { el.textContent = finalText; done(); return; }
+    var chars = finalText.split("");
+    var locked = chars.map(function(c){ return c === " " || c === "\n"; });
+    var frame = 0;
+    var totalFrames = 28;
+    var lockPerFrame = Math.ceil(chars.length / totalFrames);
+
+    var iv = setInterval(function(){
+      var lockCount = Math.min(chars.length, (frame + 1) * lockPerFrame);
+      var out = "";
+      for (var i = 0; i < chars.length; i++){
+        if (chars[i] === " ") { out += " "; continue; }
+        if (i < lockCount || locked[i]) out += chars[i];
+        else out += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      }
+      el.textContent = out;
+      frame++;
+      if (frame >= totalFrames){
+        clearInterval(iv);
+        el.textContent = finalText;
+        done();
+      }
+    }, 38);
+  }
+
+  function render(state){
+    var q = CHALLENGES[state.index];
+    var theme = THEMES[state.themeIdx];
+    applyTheme(theme);
+
+    els.idx.textContent = String(state.index + 1).padStart(2,"0") + " / " + String(CHALLENGES.length).padStart(2,"0");
+    els.type.textContent = q.type.toUpperCase();
+    els.details.textContent = q.details || "";
+    els.staffNote.hidden = q.type !== "staff";
+    els.filmSeconds.textContent = CONFIG.maxFilmSeconds;
+    els.handleTag.textContent = CONFIG.handle;
+    els.credit.textContent = CONFIG.credit;
+
+    var remaining = CONFIG.maxRerolls - state.rerolls;
+    if (remaining > 0){
+      els.rerollBtn.disabled = false;
+      els.rerollBtn.textContent = "Reroll (" + remaining + " left)";
+    } else {
+      els.rerollBtn.disabled = true;
+      els.rerollBtn.textContent = "Committed.";
+    }
+
+    scrambleInto(els.scramble, q.title, function(){
+      if (navigator.vibrate) navigator.vibrate(20);
+      els.scramble.classList.add("pulse");
+      setTimeout(function(){ els.scramble.classList.remove("pulse"); }, 300);
+    });
+  }
+
+  function pickIndex(exclude){
+    if (CHALLENGES.length <= 1) return 0;
+    var i;
+    do { i = Math.floor(Math.random() * CHALLENGES.length); } while (i === exclude);
+    return i;
+  }
+
+  var state = store();
+  if (!state || state.index >= CHALLENGES.length){
+    state = {
+      index: Math.floor(Math.random() * CHALLENGES.length),
+      themeIdx: Math.floor(Math.random() * THEMES.length),
+      rerolls: 0
+    };
+    saveStore(state);
+  }
+  render(state);
+
+  els.rerollBtn.addEventListener("click", function(){
+    if (state.rerolls >= CONFIG.maxRerolls) return;
+    state.index = pickIndex(state.index);
+    state.themeIdx = (state.themeIdx + 1 + Math.floor(Math.random()*2)) % THEMES.length;
+    state.rerolls++;
+    saveStore(state);
+    render(state);
+  });
+})();
+</script>
+</body>
+</html>

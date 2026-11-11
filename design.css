@@ -1,0 +1,124 @@
+:root{
+    --sun:#FFD21F; --cobalt:#1F3CFF; --navy:#0A0F2E; --neon-pink:#FF2E93;
+    --bg:var(--cobalt); --fg:var(--sun); --btn-bg:var(--sun); --btn-fg:var(--navy);
+    --ease:cubic-bezier(.2,.8,.2,1);
+    box-sizing:border-box;
+  }
+  *{box-sizing:inherit; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    min-height:100dvh; background:var(--bg); color:var(--fg);
+    font-family:'Bricolage Grotesque',system-ui,-apple-system,sans-serif;
+    overflow:hidden; position:relative; touch-action:manipulation;
+    transition:background-color .6s var(--ease), color .6s var(--ease);
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace; text-transform:uppercase; letter-spacing:.08em; font-weight:600;}
+  
+  /* ატმოსფერული განათება ფონისთვის (Glow Effects) */
+  .bg-glow {
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 210, 31, 0.15);
+    filter: blur(80px);
+    border-radius: 50%;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .grain{
+    position:fixed; inset:0; pointer-events:none; opacity:.09; mix-blend-mode:overlay; z-index:5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{
+    position:relative; z-index:1; height:100dvh; max-width:520px; margin:0 auto;
+    /* Row order matches the HTML: Header -> Main (Quest) -> Rules -> Footer */
+    display:grid; grid-template-rows: auto 1fr auto auto; padding:24px; overflow-y:auto;
+    gap: 16px; /* ელემენტებს შორის თანაბარი დაშორებისთვის */
+    padding-top:calc(24px + env(safe-area-inset-top,0px));
+    padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  }
+  header{
+    display:flex; justify-content:space-between; align-items:center; font-size:11px; opacity:0; animation:fadeIn .3s var(--ease) forwards;
+  }
+  .chip{
+    border:2px solid currentColor; border-radius:999px; padding:4px 12px; font-size:10px;
+    box-shadow: 2px 2px 0px currentColor;
+  }
+
+  /* QUEST: ცენტრალური ნაწილი უფრო დრამატული სათაურით */
+  main{display:flex; align-items:center; justify-content:center; min-height:0; text-align: center;}
+  .quest-box{
+    width:100%;
+    padding: 24px 16px;
+    border: 3px dashed color-mix(in srgb, currentColor 30%, transparent);
+    border-radius: 20px;
+    background: color-mix(in srgb, currentColor 4%, transparent);
+    backdrop-filter: blur(5px);
+  }
+  #quest-scramble{
+    font-family:'Instrument Serif',Georgia,serif; font-style:italic;
+    font-size:clamp(2rem, 8vw, 3.2rem); line-height:1.1;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+  }
+
+  /* RULES: წესების ბლოკი უფრო მკვეთრი ჩარჩოებით */
+  .rules{
+    display:flex; flex-direction:column; gap:12px;
+    padding-top:18px; margin-top:10px;
+    border-top:2px solid color-mix(in srgb, currentColor 30%, transparent);
+  }
+  .details{font-size:15px; opacity:.85; max-width:34ch; opacity:0; transform:translateY(12px); animation:up .5s var(--ease) forwards; animation-delay:1.3s;}
+  
+  .staff-note{
+    border:2px solid currentColor; border-radius:12px; padding:10px 14px; font-size:12px;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    box-shadow: 3px 3px 0px currentColor;
+    opacity:0; transform:translateY(12px); animation:up .5s var(--ease) forwards; animation-delay:1.38s;
+  }
+  
+  .steps{list-style:none; display:flex; flex-direction:column; gap:8px; font-size:13px; line-height:1.4;}
+  .steps li{opacity:0; transform:translateY(12px); animation:up .5s var(--ease) forwards; display:flex; gap:10px; align-items: center;}
+  .steps li:nth-child(1){animation-delay:1.46s;}
+  .steps li:nth-child(2){animation-delay:1.54s;}
+  .steps li:nth-child(3){animation-delay:1.62s;}
+  .steps b{
+    font-family:'JetBrains Mono',monospace; background:currentColor; color:var(--bg);
+    padding: 2px 6px; border-radius: 4px; font-size: 11px; flex-shrink:0;
+  }
+
+  footer{display:flex; flex-direction:column; gap:14px; opacity:0; transform:translateY(12px); animation:up .5s var(--ease) forwards; animation-delay:1.8s; padding-top:16px;}
+  
+  button{
+    font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:16px;
+    background:var(--btn-bg); color:var(--btn-fg); border:3px solid var(--btn-fg); border-radius:16px;
+    padding:16px 20px; min-height:50px; cursor:pointer; 
+    box-shadow: 4px 4px 0px var(--btn-fg);
+    transition:transform .1s var(--ease), box-shadow .1s var(--ease), opacity .3s var(--ease);
+  }
+  button:hover{
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--btn-fg);
+  }
+  button:active{
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px var(--btn-fg);
+  }
+  button:disabled{opacity:.5; cursor:default; transform: none; box-shadow: 2px 2px 0px var(--btn-fg);}
+  button:focus-visible, a:focus-visible{outline:3px solid currentColor; outline-offset:3px;}
+  
+  .credit{font-size:10px; opacity:.7; text-align:center;}
+  .pulse{animation:pulse .3s var(--ease);}
+  
+  @keyframes fadeIn{to{opacity:1;}}
+  @keyframes up{to{opacity:1; transform:translateY(0);}}
+  @keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.03);}100%{transform:scale(1);}}
+  
+  .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.01ms !important; animation-delay:0s !important;}
+  }
